@@ -1,8 +1,14 @@
 # Grok Video Workflow
 
+**Languages:** English | [简体中文](./README.zh-CN.md)
+
 A small local CLI workflow for generating videos with the xAI Grok Imagine Video API.
 
-It supports:
+If this project helps you, please give it a ⭐ Star!
+
+## What It Does
+
+This project wraps Grok Imagine Video into a practical local workflow:
 
 - text-to-video
 - reference-to-video with local images or HTTPS image URLs
@@ -11,8 +17,9 @@ It supports:
 - metadata JSON output
 - cost estimates
 - contact sheet frame review
+- Codex-friendly command usage
 
-This project is designed to work well with Codex: ask Codex to write or compress prompts, run the CLI, inspect the generated contact sheet, and decide whether to rerun.
+It is designed to work well with Codex: ask Codex to write or compress prompts, run the CLI, inspect the generated contact sheet, and decide whether to rerun.
 
 ## Important Notes
 
@@ -26,7 +33,7 @@ This project is designed to work well with Codex: ask Codex to write or compress
 ## Setup
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Rion-Wu-tech/grok-video-workflow.git
 cd grok-video-workflow
 npm install
 cp .env.example .env
@@ -130,6 +137,19 @@ Generate a reference-to-video clip from examples/storyboard.png, duration 10 sec
 
 Codex can run local tools and can be extended through scripts, skills, and MCP servers. xAI Grok video generation is exposed through xAI's API. This repository wraps that API into a local workflow that Codex can operate.
 
+## Author
+
+Created by [Rion-Wu-tech](https://github.com/Rion-Wu-tech).
+
+## Acknowledgements
+
+- [Hermes Agent](https://github.com/Hermes-AGI) - powerful AI agent framework inspiration
+- [TechCrunch](https://techcrunch.com/) - AI and technology news source
+- [CoinDesk](https://www.coindesk.com/) - crypto news source
+- [GitHub Trending](https://github.com/trending) - discovery of high-quality open-source projects
+
 ## Safety
 
 Respect image rights, likeness rights, trademarks, and event broadcast rights. Do not present AI-generated event footage as real footage.
+
+If this project helps you, please give it a ⭐ Star!
