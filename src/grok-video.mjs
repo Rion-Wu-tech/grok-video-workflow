@@ -4,10 +4,14 @@ import path from "node:path";
 import process from "node:process";
 
 const API_BASE = "https://api.x.ai/v1";
-const MODEL = "grok-imagine-video";
-const PRICE_PER_SECOND_USD = { "480p": 0.05, "720p": 0.07 };
+const DEFAULT_MODEL = "grok-imagine-video";
+const MODEL_PRICES_USD = {
+  "grok-imagine-video": { "480p": 0.05, "720p": 0.07 },
+  "grok-imagine-video-1.5-preview": { "480p": 0.08, "720p": 0.14 },
+};
+const SUPPORTED_MODELS = new Set(Object.keys(MODEL_PRICES_USD));
 const ASPECT_RATIOS = new Set(["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"]);
-const RESOLUTIONS = new Set(Object.keys(PRICE_PER_SECOND_USD));
+const RESOLUTIONS = new Set(["480p", "720p"]);
 
 function help() {
   console.log(`Grok Imagine Video CLI
@@ -29,11 +33,23 @@ Options:
   --poll-interval <seconds>    Default: 5.
   --timeout-minutes <minutes>  Default: 20.
   --request-id <id>            Poll and download an existing request.
+  --model <name>               Default: ${DEFAULT_MODEL}. Or set XAI_VIDEO_MODEL.
+  --list-models                Show supported video models.
   --no-download                Print hosted URL without saving video.
   --help                       Show this help.
 
 Environment:
   XAI_API_KEY must be set in your shell or in a local .env file.`);
+}
+
+function printModelList() {
+  console.log("Supported Grok Imagine video models:");
+  for (const model of SUPPORTED_MODELS) {
+    const prices = MODEL_PRICES_USD[model];
+    console.log(`- ${model}`);
+    console.log(`  480p: $${prices["480p"].toFixed(2)}/s`);
+    console.log(`  720p: $${prices["720p"].toFixed(2)}/s`);
+  }
 }
 
 function parseArgs(argv) {
@@ -43,6 +59,7 @@ function parseArgs(argv) {
     resolution: "480p",
     outputDir: path.resolve("outputs"),
     prefix: "grok-video",
+    model: process.env.XAI_VIDEO_MODEL || DEFAULT_MODEL,
     pollIntervalSeconds: 5,
     timeoutMinutes: 20,
     download: true,
@@ -62,6 +79,9 @@ function parseArgs(argv) {
       case "-h":
       case "--help":
         args.help = true;
+        break;
+      case "--list-models":
+        args.listModels = true;
         break;
       case "-p":
       case "--prompt":
@@ -96,6 +116,9 @@ function parseArgs(argv) {
         break;
       case "--request-id":
         args.requestId = next();
+        break;
+      case "--model":
+        args.model = next();
         break;
       case "--no-download":
         args.download = false;
@@ -134,8 +157,11 @@ async function hydratePrompt(args) {
 }
 
 function validate(args) {
-  if (args.help) return;
+  if (args.help || args.listModels) return;
   if (!args.prompt && !args.requestId) throw new Error("Provide --prompt, --prompt-file, or --request-id.");
+  if (!SUPPORTED_MODELS.has(args.model)) {
+    throw new Error(`--model must be one of: ${[...SUPPORTED_MODELS].join(", ")}`);
+  }
   if (!Number.isInteger(args.duration) || args.duration < 1 || args.duration > 15) {
     throw new Error("--duration must be an integer from 1 to 15.");
   }
@@ -148,6 +174,10 @@ function validate(args) {
   if (!Number.isFinite(args.pollIntervalSeconds) || args.pollIntervalSeconds < 1) throw new Error("--poll-interval must be at least 1.");
   if (!Number.isFinite(args.timeoutMinutes) || args.timeoutMinutes <= 0) throw new Error("--timeout-minutes must be greater than 0.");
   if (args.prompt && args.prompt.length > 4096) throw new Error(`Prompt is ${args.prompt.length} characters. xAI currently allows up to 4096.`);
+}
+
+function pricePerSecond(model, resolution) {
+  return MODEL_PRICES_USD[model]?.[resolution] ?? null;
 }
 
 async function requestJson(url, { method = "GET", apiKey, body } = {}) {
@@ -187,9 +217,9 @@ async function toReferenceUrl(input) {
 }
 
 async function startGeneration(args, apiKey) {
-  const estimatedCost = args.duration * PRICE_PER_SECOND_USD[args.resolution];
+  const perSecondPrice = pricePerSecond(args.model, args.resolution);
   const body = {
-    model: MODEL,
+    model: args.model,
     prompt: args.prompt,
     duration: args.duration,
     aspect_ratio: args.aspectRatio,
@@ -200,8 +230,12 @@ async function startGeneration(args, apiKey) {
     body.reference_images = await Promise.all(args.referenceImages.map(async (image) => ({ url: await toReferenceUrl(image) })));
   }
 
-  console.log(`model: ${MODEL}`);
-  console.log(`estimated_cost_usd: ${estimatedCost.toFixed(2)} (${args.duration}s ${args.resolution})`);
+  console.log(`model: ${args.model}`);
+  if (perSecondPrice === null) {
+    console.log(`estimated_cost_usd: unknown (${args.duration}s ${args.resolution}; check xAI pricing)`);
+  } else {
+    console.log(`estimated_cost_usd: ${(args.duration * perSecondPrice).toFixed(2)} (${args.duration}s ${args.resolution})`);
+  }
   if (body.reference_images) console.log(`reference_images: ${body.reference_images.length}`);
 
   const data = await requestJson(`${API_BASE}/videos/generations`, { method: "POST", apiKey, body });
@@ -247,7 +281,7 @@ async function writeMetadata(args, requestId, result, localVideoPath) {
   const metadataPath = path.join(args.outputDir, `${args.prefix}-${timestamp}-${requestId.slice(0, 8)}.json`);
   await writeFile(metadataPath, `${JSON.stringify({
     request_id: requestId,
-    model: MODEL,
+    model: args.model,
     prompt: args.prompt,
     duration: args.duration,
     aspect_ratio: args.aspectRatio,
@@ -265,6 +299,7 @@ async function main() {
   await loadDotEnv();
   const args = await hydratePrompt(parseArgs(process.argv.slice(2)));
   if (args.help) return help();
+  if (args.listModels) return printModelList();
   validate(args);
 
   const apiKey = process.env.XAI_API_KEY;
