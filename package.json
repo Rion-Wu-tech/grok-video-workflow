@@ -9,6 +9,9 @@
   },
   "scripts": {
     "video": "node ./src/grok-video.mjs",
+    "video:standard": "XAI_VIDEO_MODEL=grok-imagine-video node ./src/grok-video.mjs",
+    "video:latest": "XAI_VIDEO_MODEL=grok-imagine-video-1.5-preview node ./src/grok-video.mjs",
+    "models": "node ./src/grok-video.mjs --list-models",
     "review": "node ./src/review-video.mjs",
     "check": "node ./src/grok-video.mjs --help && node ./src/review-video.mjs --help"
   },
