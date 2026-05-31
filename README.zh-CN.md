@@ -44,12 +44,31 @@ cp .env.example .env
 
 ```env
 XAI_API_KEY=your-xai-api-key
+XAI_VIDEO_MODEL=grok-imagine-video
 ```
 
 ## 文生视频
 
 ```bash
 npm run video -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 480p
+```
+
+工作流已经内置两个 xAI 视频模型。你可以先列出可选模型：
+
+```bash
+npm run models
+```
+
+常规批量生成，建议用标准模型：
+
+```bash
+npm run video:standard -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 480p
+```
+
+如果你想测试更新的预览模型：
+
+```bash
+npm run video:latest -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 720p
 ```
 
 ## 参考图生成视频
@@ -93,8 +112,13 @@ npm run review -- --video outputs/your-video.mp4
 创建这个项目时，xAI 公开价格中 Grok Imagine Video 大约是：
 
 ```text
-480p: $0.05 / 秒
-720p: $0.07 / 秒
+grok-imagine-video:
+  480p: $0.05 / 秒
+  720p: $0.07 / 秒
+
+grok-imagine-video-1.5-preview:
+  480p: $0.08 / 秒
+  720p: $0.14 / 秒
 ```
 
 示例：
@@ -121,6 +145,8 @@ npm run review -- --video outputs/your-video.mp4
 --poll-interval <seconds>    默认 5 秒。
 --timeout-minutes <minutes>  默认 20 分钟。
 --request-id <id>            轮询并下载已有请求。
+--model <name>               默认 grok-imagine-video。也可设置 XAI_VIDEO_MODEL。
+--list-models                显示支持的视频模型。
 --no-download                只输出 hosted URL，不下载视频。
 ```
 
