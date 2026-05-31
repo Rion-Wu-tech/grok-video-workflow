@@ -43,12 +43,31 @@ Edit `.env`:
 
 ```env
 XAI_API_KEY=your-xai-api-key
+XAI_VIDEO_MODEL=grok-imagine-video
 ```
 
 ## Generate A Text-To-Video Clip
 
 ```bash
 npm run video -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 480p
+```
+
+The workflow includes both xAI video models. You can list them locally:
+
+```bash
+npm run models
+```
+
+Use the standard model for lower-cost routine generations:
+
+```bash
+npm run video:standard -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 480p
+```
+
+Use the newer preview model when you want to test the latest quality:
+
+```bash
+npm run video:latest -- --prompt "A cinematic AI creator editing videos at midnight, vertical social media style" --duration 5 --aspect-ratio 9:16 --resolution 720p
 ```
 
 ## Generate A Reference-To-Video Clip
@@ -92,8 +111,13 @@ Review checklist:
 At the time this workflow was created, xAI's public pricing listed Grok Imagine Video around:
 
 ```text
-480p: $0.05 / second
-720p: $0.07 / second
+grok-imagine-video:
+  480p: $0.05 / second
+  720p: $0.07 / second
+
+grok-imagine-video-1.5-preview:
+  480p: $0.08 / second
+  720p: $0.14 / second
 ```
 
 Examples:
@@ -120,6 +144,8 @@ Always check the xAI Console and official pricing page before large batches.
 --poll-interval <seconds>    Default: 5.
 --timeout-minutes <minutes>  Default: 20.
 --request-id <id>            Poll and download an existing request.
+--model <name>               Default: grok-imagine-video. Or set XAI_VIDEO_MODEL.
+--list-models                Show supported video models.
 --no-download                Print hosted URL without saving video.
 ```
 
